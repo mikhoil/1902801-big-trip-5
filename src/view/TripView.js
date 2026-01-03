@@ -1,7 +1,7 @@
-import { createElement } from '../render';
+import AbstractView from './AbstractView';
 
-export default class TripView {
-  getTemplate() {
+export default class TripView extends AbstractView {
+  get template() {
     return `<section class="trip-main__trip-info  trip-info">
                 <div class="trip-info__main">
                     <h1 class="trip-info__title">Amsterdam &mdash; Chamonix &mdash; Geneva</h1>
@@ -11,16 +11,5 @@ export default class TripView {
                 Total: &euro;&nbsp;<span class="trip-info__cost-value">1230</span>
                 </p>
             </section>`;
-  }
-
-  getElement() {
-    if (!this.element) {
-      this.element = createElement(this.getTemplate());
-    }
-    return this.element;
-  }
-
-  removeElement() {
-    this.element = null;
   }
 }

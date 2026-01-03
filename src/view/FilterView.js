@@ -1,7 +1,7 @@
-import { createElement } from '../render';
+import AbstractView from './AbstractView';
 
-export default class FilterView {
-  getTemplate() {
+export default class FilterView extends AbstractView {
+  get template() {
     return `<form class="trip-filters" action="#" method="get">
                 <div class="trip-filters__filter">
                   <input id="filter-everything" class="trip-filters__filter-input  visually-hidden" type="radio" name="trip-filter" value="everything">
@@ -25,16 +25,5 @@ export default class FilterView {
 
                 <button class="visually-hidden" type="submit">Accept filter</button>
               </form>`;
-  }
-
-  getElement() {
-    if (!this.element) {
-      this.element = createElement(this.getTemplate());
-    }
-    return this.element;
-  }
-
-  removeElement() {
-    this.element = null;
   }
 }
