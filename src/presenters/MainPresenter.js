@@ -4,6 +4,7 @@ import { render, RenderPosition, replace } from '../framework/render';
 import FilterView from '../view/FilterView';
 import AddPointView from '../view/AddPointView';
 import PointView from '../view/PointView';
+import EmptyPointsListView from '../view/EmptyPointsListView';
 
 export default class MainPresenter {
   constructor(model) {
@@ -12,7 +13,21 @@ export default class MainPresenter {
 
   renderFilters() {
     render(
-      new FilterView(),
+      new FilterView({
+        hasPast: this.model
+          .getPoints()
+          .some((point) => new Date(point.date_from) < new Date()),
+        hasFuture: this.model
+          .getPoints()
+          .some((point) => new Date(point.date_to) > new Date()),
+        hasPresent: this.model
+          .getPoints()
+          .some(
+            (point) =>
+              new Date(point.date_from) <= new Date() &&
+              new Date(point.date_to) >= new Date()
+          ),
+      }),
       document.querySelector('.trip-controls__filters'),
       RenderPosition.BEFOREEND
     );
@@ -29,6 +44,14 @@ export default class MainPresenter {
   renderPointsList() {
     const tripEventsList = document.querySelector('.trip-events__list');
     const points = this.model.getPoints();
+    if (points.length === 0) {
+      render(
+        new EmptyPointsListView(),
+        tripEventsList,
+        RenderPosition.BEFOREEND
+      );
+      return;
+    }
 
     const pointsToRender = points.slice(0, 3);
 
