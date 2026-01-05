@@ -1,7 +1,11 @@
 import EditPointView from './EditPointView';
 
 export default class AddPointView extends EditPointView {
-  constructor(availableOffers = [], allDestinations = []) {
-    super(null, null, availableOffers, [], allDestinations);
+  constructor(
+    availableOffers = [],
+    allDestinations = [],
+    getOffersByType = null
+  ) {
+    super(null, null, availableOffers, [], allDestinations, getOffersByType);
   }
 }

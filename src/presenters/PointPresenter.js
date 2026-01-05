@@ -17,6 +17,7 @@ export default class PointPresenter {
     allDestinations,
     onModelChange,
     onDataChange,
+    getOffersByType,
   }) {
     this.container = container;
     this.point = point;
@@ -26,7 +27,7 @@ export default class PointPresenter {
     this.allDestinations = allDestinations;
     this.onModelChange = onModelChange;
     this.onDataChange = onDataChange;
-
+    this.getOffersByType = getOffersByType;
     this.mode = Mode.DEFAULT;
     this.pointView = null;
     this.editPointView = null;
@@ -102,7 +103,8 @@ export default class PointPresenter {
       this.destination,
       this.offersByType,
       this.point.offers || [],
-      this.allDestinations
+      this.allDestinations,
+      this.getOffersByType
     );
 
     this.editPointView.setSubmitHandler(this.#handleFormSubmit);
