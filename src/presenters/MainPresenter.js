@@ -1,14 +1,15 @@
 import SortView from '../view/SortView';
-import EditPointView from '../view/EditPointView';
 import { render, RenderPosition, replace } from '../framework/render';
 import FilterView from '../view/FilterView';
 import AddPointView from '../view/AddPointView';
-import PointView from '../view/PointView';
 import EmptyPointsListView from '../view/EmptyPointsListView';
+import PointPresenter from './PointPresenter';
+import PointView from '../view/PointView';
 
 export default class MainPresenter {
   constructor(model) {
     this.model = model;
+    this.pointPresenters = [];
   }
 
   renderFilters() {
@@ -55,50 +56,74 @@ export default class MainPresenter {
 
     const pointsToRender = points.slice(0, 3);
 
-    pointsToRender.forEach((point) => {
+    this.pointPresenters = pointsToRender.map((point) => {
       const destination = this.model.getDestinationById(point.destination);
       const selectedOffers = this.model.getSelectedOffers(point);
-
-      const pointView = new PointView(point, destination, selectedOffers);
       const listItem = document.createElement('li');
       listItem.className = 'trip-events__item';
-      listItem.appendChild(pointView.element);
       tripEventsList.appendChild(listItem);
 
-      const availableOffers = this.model.getOffersByType(point.type);
-      const selectedOffersIds = point.offers || [];
-      const allDestinations = this.model.getAllDestinations();
-      const editPointView = new EditPointView(
+      const pointPresenter = new PointPresenter({
+        container: listItem,
         point,
         destination,
-        availableOffers,
-        selectedOffersIds,
-        allDestinations
+        selectedOffers,
+        offersByType: this.model.getOffersByType(point.type),
+        allDestinations: this.model.getAllDestinations(),
+        onModelChange: () => this.resetAllPointViews(),
+        onDataChange: (updatedPoint) => this.updatePoint(updatedPoint),
+      });
+
+      pointPresenter.init();
+      return pointPresenter;
+    });
+  }
+
+  resetAllPointViews() {
+    this.pointPresenters.forEach((presenter) => presenter.resetView());
+  }
+
+  updatePoint(updatedPoint) {
+    this.model.updatePoint(updatedPoint);
+
+    const pointPresenter = this.pointPresenters.find(
+      (presenter) => presenter.point.id === updatedPoint.id
+    );
+
+    if (pointPresenter) {
+      const oldPointView = pointPresenter.pointView;
+
+      pointPresenter.point = updatedPoint;
+      pointPresenter.selectedOffers =
+        this.model.getSelectedOffers(updatedPoint);
+      pointPresenter.offersByType = this.model.getOffersByType(
+        updatedPoint.type
       );
 
-      const onEscKeyDown = (evt) => {
-        if (evt.key === 'Escape' || evt.key === 'Esc') {
-          evt.preventDefault();
-          replace(pointView, editPointView);
-          document.removeEventListener('keydown', onEscKeyDown);
-        }
-      };
+      const newPointView = new PointView(
+        updatedPoint,
+        pointPresenter.destination,
+        pointPresenter.selectedOffers
+      );
 
-      pointView.setRollupHandler(() => {
-        replace(editPointView, pointView);
-        document.addEventListener('keydown', onEscKeyDown);
+      newPointView.setRollupHandler(() => {
+        this.resetAllPointViews();
+        const editPointView = pointPresenter.editPointView;
+        replace(editPointView, newPointView);
+        pointPresenter.mode = 'EDITING';
       });
 
-      editPointView.setSubmitHandler(() => {
-        replace(pointView, editPointView);
-        document.removeEventListener('keydown', onEscKeyDown);
+      newPointView.setFavoriteClickHandler(() => {
+        this.updatePoint({
+          ...updatedPoint,
+          is_favorite: !updatedPoint.is_favorite,
+        });
       });
 
-      editPointView.setRollupHandler(() => {
-        replace(pointView, editPointView);
-        document.removeEventListener('keydown', onEscKeyDown);
-      });
-    });
+      replace(newPointView, oldPointView);
+
+      pointPresenter.pointView = newPointView;
+    }
   }
 
   renderAddPoint() {

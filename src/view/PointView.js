@@ -67,7 +67,7 @@ export default class PointView extends AbstractView {
           <p class="event__duration">${duration}</p>
         </div>
         <p class="event__price">
-          &euro;&nbsp;<span class="event__price-value">${this.point.basePrice}</span>
+          &euro;&nbsp;<span class="event__price-value">${this.point.base_price}</span>
         </p>
         ${offersHTML}
         <button class="event__favorite-btn ${favoriteClass}" type="button">
@@ -86,6 +86,12 @@ export default class PointView extends AbstractView {
   setRollupHandler(handler) {
     this.element
       .querySelector('.event__rollup-btn')
+      .addEventListener('click', handler);
+  }
+
+  setFavoriteClickHandler(handler) {
+    this.element
+      .querySelector('.event__favorite-btn')
       .addEventListener('click', handler);
   }
 }

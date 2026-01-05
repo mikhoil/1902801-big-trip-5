@@ -30,4 +30,18 @@ export default class MainModel {
   getAllDestinations() {
     return this.destinations;
   }
+
+  updatePoint(updatedPoint) {
+    const index = this.points.findIndex(
+      (point) => point.id === updatedPoint.id
+    );
+    if (index !== -1) {
+      this.points = [
+        ...this.points.slice(0, index),
+        updatedPoint,
+        ...this.points.slice(index + 1),
+      ];
+    }
+    console.log(this.points);
+  }
 }
