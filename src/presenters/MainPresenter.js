@@ -115,6 +115,7 @@ export default class MainPresenter {
         allDestinations: this.model.getAllDestinations(),
         onModelChange: () => this.resetAllPointViews(),
         onDataChange: (updatedPoint) => this.updatePoint(updatedPoint),
+        getOffersByType: this.model.getOffersByType,
       });
 
       pointPresenter.init();

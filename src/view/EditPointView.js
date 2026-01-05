@@ -1,35 +1,41 @@
 import { parseFormatDateForInput } from '../utils/date-time';
 import { POINT_TYPE_LIST } from '../mock-data';
-import AbstractView from '../framework/view/abstract-view.js';
+import AbstractStatefulView from '../framework/view/abstract-stateful-view.js';
 
-export default class EditPointView extends AbstractView {
+export default class EditPointView extends AbstractStatefulView {
   constructor(
     point = null,
     destination = null,
     availableOffers = [],
     selectedOffersIds = [],
-    allDestinations = []
+    allDestinations = [],
+    getOffersByType = null
   ) {
     super();
-    this.point = point;
-    this.destination = destination;
-    this.availableOffers = availableOffers;
-    this.selectedOffersIds = selectedOffersIds;
-    this.allDestinations = allDestinations;
+    this._state = {
+      point,
+      destination,
+      availableOffers,
+      selectedOffersIds,
+      allDestinations,
+    };
+    this.getOffersByType = getOffersByType;
+    this._callbacks = {};
+    this._restoreHandlers();
   }
 
   get template() {
-    const pointType = this.point?.type || 'flight';
-    const destinationName = this.destination?.name || '';
-    const startTime = this.point
-      ? parseFormatDateForInput(this.point.date_from)
+    const pointType = this._state.point?.type || 'flight';
+    const destinationName = this._state.destination?.name || '';
+    const startTime = this._state.point
+      ? parseFormatDateForInput(this._state.point.date_from)
       : '';
-    const endTime = this.point
-      ? parseFormatDateForInput(this.point.date_to)
+    const endTime = this._state.point
+      ? parseFormatDateForInput(this._state.point.date_to)
       : '';
-    const price = this.point?.base_price || '';
-    const description = this.destination?.description || '';
-    const pictures = this.destination?.pictures || [];
+    const price = this._state.point?.base_price || '';
+    const description = this._state.destination?.description || '';
+    const pictures = this._state.destination?.pictures || [];
 
     const typeOptionsHTML = POINT_TYPE_LIST.map((type) => {
       const checked = type === pointType ? 'checked' : '';
@@ -43,8 +49,8 @@ export default class EditPointView extends AbstractView {
     }).join('');
 
     const destinationOptionsHTML =
-      this.allDestinations.length > 0
-        ? this.allDestinations
+      this._state.allDestinations.length > 0
+        ? this._state.allDestinations
             .map((dest) => `<option value="${dest.name}"></option>`)
             .join('')
         : `
@@ -54,14 +60,14 @@ export default class EditPointView extends AbstractView {
       `;
 
     const offersHTML =
-      this.availableOffers.length > 0
+      this._state.availableOffers.length > 0
         ? `
       <section class="event__section  event__section--offers">
         <h3 class="event__section-title  event__section-title--offers">Offers</h3>
         <div class="event__available-offers">
-          ${this.availableOffers
+          ${this._state.availableOffers
             .map((offer, index) => {
-              const checked = this.selectedOffersIds.includes(offer.id)
+              const checked = this._state.selectedOffersIds.includes(offer.id)
                 ? 'checked'
                 : '';
               return `
@@ -156,10 +162,10 @@ export default class EditPointView extends AbstractView {
 
           <button class="event__save-btn  btn  btn--blue" type="submit">Save</button>
           <button class="event__reset-btn" type="reset">${
-            this.point ? 'Delete' : 'Cancel'
+            this._state.point ? 'Delete' : 'Cancel'
           }</button>
           ${
-            this.point
+            this._state.point
               ? `
             <button class="event__rollup-btn" type="button">
               <span class="visually-hidden">Open event</span>
@@ -183,6 +189,7 @@ export default class EditPointView extends AbstractView {
   }
 
   setSubmitHandler(handler) {
+    this._callbacks.onSubmit = handler;
     this.element.addEventListener('submit', (e) => {
       e.preventDefault();
       handler();
@@ -190,8 +197,73 @@ export default class EditPointView extends AbstractView {
   }
 
   setRollupHandler(handler) {
+    this._callbacks.onRollup = handler;
     this.element
       .querySelector('.event__rollup-btn')
       .addEventListener('click', handler);
+  }
+
+  _restoreHandlers() {
+    this.#setInnerHandlers();
+    if (this._callbacks.onSubmit) {
+      this.setSubmitHandler(this._callbacks.onSubmit);
+    }
+    if (this._callbacks.onRollup) {
+      this.setRollupHandler(this._callbacks.onRollup);
+    }
+  }
+
+  #setInnerHandlers() {
+    const eventTypeGroup = this.element.querySelector('.event__type-group');
+    if (eventTypeGroup) {
+      eventTypeGroup.addEventListener('change', (evt) => {
+        const input = evt.target;
+        if (input && input.name === 'event-type') {
+          const newType = input.value;
+          const newOffers = this.getOffersByType
+            ? this.getOffersByType(newType)
+            : [];
+          const newPoint = this._state.point
+            ? { ...this._state.point, type: newType }
+            : { type: newType };
+          this.updateElement({
+            point: newPoint,
+            availableOffers: newOffers,
+            selectedOffersIds: [],
+          });
+        }
+      });
+    }
+
+    const eventDestinationInput = this.element.querySelector(
+      '#event-destination-1'
+    );
+    if (eventDestinationInput) {
+      eventDestinationInput.addEventListener('change', () => {
+        const name = eventDestinationInput.value;
+        const found =
+          this._state.allDestinations.find((d) => d.name === name) || null;
+        this.updateElement({ destination: found });
+      });
+    }
+
+    const eventAvailableOffers = this.element.querySelector(
+      '.event__available-offers'
+    );
+    if (eventAvailableOffers) {
+      eventAvailableOffers.addEventListener('change', (evt) => {
+        const input = evt.target;
+        if (input && input.classList.contains('event__offer-checkbox')) {
+          const offerId = Number(input.dataset.offerId);
+          const currentOfferId = new Set(this._state.selectedOffersIds);
+          if (input.checked) {
+            currentOfferId.add(offerId);
+          } else {
+            currentOfferId.delete(offerId);
+          }
+          this._setState({ selectedOffersIds: Array.from(currentOfferId) });
+        }
+      });
+    }
   }
 }
