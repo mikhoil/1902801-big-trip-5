@@ -1,32 +1,60 @@
 import dayjs from 'dayjs';
+import { TIME_SUFFIXES_LIST } from './data-types.js';
 
 export function parseFormatDate(dateString) {
   return dayjs(dateString).format('MMM D');
 }
 
-export function parseFormatTime(dateString) {
-  return dayjs(dateString).format('HH:mm');
-}
+export function parseFormatDuration(dateFrom, dateTo) {
+  const startTime = dayjs(dateFrom);
+  const endTime = dayjs(dateTo);
+  const durationMinutes = endTime.diff(startTime, 'minute');
 
-export function parseFormatDateForInput(dateString) {
-  return dayjs(dateString).format('DD/MM/YY HH:mm');
-}
+  const durationDays = Math.floor(durationMinutes / 1440);
+  const remainingMinutes = durationMinutes % 1440;
+  const durationHours = Math.floor(remainingMinutes / 60);
+  const durationsMinutes = (remainingMinutes % 60) + 1;
 
-export function calculateDuration(dateFromString, dateToString) {
-  const from = dayjs(dateFromString);
-  const to = dayjs(dateToString);
-  const diffMins = Math.max(0, to.diff(from, 'minute'));
+  const durationElements = [durationDays, durationHours, durationsMinutes];
+  const durationResult = [];
 
-  if (diffMins < 60) {
-    return `${diffMins}M`;
+  for (let i = 0; i < durationElements.length; i++) {
+    const value = durationElements[i];
+    if (value > 0) {
+      const suffix = TIME_SUFFIXES_LIST[i];
+      const paddedValue = value < 10 ? `0${value}` : value;
+      durationResult.push(`${paddedValue}${suffix}`);
+    }
   }
 
-  const hours = Math.floor(diffMins / 60);
-  const minutes = diffMins % 60;
+  return durationResult.join(' ') || '00M';
+}
+export function isPointPast(point) {
+  return dayjs(point.date_to).isBefore(dayjs());
+}
 
-  if (minutes === 0) {
-    return `${hours}H`;
-  }
+export function isPointPresent(point) {
+  return (
+    dayjs(point.date_from).isBefore(dayjs()) &&
+    dayjs(point.date_to).isAfter(dayjs())
+  );
+}
 
-  return `${hours}H ${minutes}M`;
+export function isPointFuture(point) {
+  return dayjs(point.date_from).isAfter(dayjs());
+}
+
+export function sortByDay(pointFirst, pointSecond) {
+  return new Date(pointFirst.dateFrom) - new Date(pointSecond.dateFrom);
+}
+
+export function sortByPrice(pointFirst, pointSecond) {
+  return pointSecond.base_price - pointFirst.base_price;
+}
+
+export function sortByDuration(pointFirst, pointSecond) {
+  return (
+    dayjs(pointSecond.dateTo).diff(dayjs(pointSecond.dateFrom)) -
+    dayjs(pointFirst.dateTo).diff(dayjs(pointFirst.dateFrom))
+  );
 }

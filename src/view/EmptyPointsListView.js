@@ -9,8 +9,6 @@ export default class EmptyPointsListView extends AbstractView {
   }
 
   get template() {
-    return `
-            <p class="trip-events__msg">${this.message}</p>
-        `;
+    return `<p class="trip-events__msg">${this.message}</p>`;
   }
 }

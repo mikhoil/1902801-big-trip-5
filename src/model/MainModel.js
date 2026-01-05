@@ -42,6 +42,5 @@ export default class MainModel {
         ...this.points.slice(index + 1),
       ];
     }
-    console.log(this.points);
   }
 }
