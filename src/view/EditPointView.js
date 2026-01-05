@@ -1,6 +1,8 @@
 import { parseFormatDateForInput } from '../utils/date-time';
 import { POINT_TYPE_LIST } from '../mock-data';
 import AbstractStatefulView from '../framework/view/abstract-stateful-view.js';
+import flatpickr from 'flatpickr';
+import 'flatpickr/dist/flatpickr.min.css';
 
 export default class EditPointView extends AbstractStatefulView {
   constructor(
@@ -211,13 +213,14 @@ export default class EditPointView extends AbstractStatefulView {
     if (this._callbacks.onRollup) {
       this.setRollupHandler(this._callbacks.onRollup);
     }
+    this.#initDateTimePickers();
   }
 
   #setInnerHandlers() {
     const eventTypeGroup = this.element.querySelector('.event__type-group');
     if (eventTypeGroup) {
-      eventTypeGroup.addEventListener('change', (evt) => {
-        const input = evt.target;
+      eventTypeGroup.addEventListener('change', (e) => {
+        const input = e.target;
         if (input && input.name === 'event-type') {
           const newType = input.value;
           const newOffers = this.getOffersByType
@@ -251,8 +254,8 @@ export default class EditPointView extends AbstractStatefulView {
       '.event__available-offers'
     );
     if (eventAvailableOffers) {
-      eventAvailableOffers.addEventListener('change', (evt) => {
-        const input = evt.target;
+      eventAvailableOffers.addEventListener('change', (e) => {
+        const input = e.target;
         if (input && input.classList.contains('event__offer-checkbox')) {
           const offerId = Number(input.dataset.offerId);
           const currentOfferId = new Set(this._state.selectedOffersIds);
@@ -264,6 +267,59 @@ export default class EditPointView extends AbstractStatefulView {
           this._setState({ selectedOffersIds: Array.from(currentOfferId) });
         }
       });
+    }
+  }
+
+  #initDateTimePickers() {
+    this.#removeDatePickers();
+    const fromInput = this.element.querySelector('#event-start-time-1');
+    const toInput = this.element.querySelector('#event-end-time-1');
+    const options = {
+      enableTime: true,
+      time_24hr: true,
+      dateFormat: 'd/m/y H:i',
+      defaultDate: this._state.point ? this._state.point.date_from : null,
+    };
+    if (fromInput) {
+      this._fromPicker = flatpickr(fromInput, {
+        ...options,
+        defaultDate: this._state.point ? this._state.point.date_from : null,
+        onChange: (selectedDates) => {
+          if (selectedDates[0] && this._state.point) {
+            const updated = {
+              ...this._state.point,
+              date_from: selectedDates[0].toISOString(),
+            };
+            this._setState({ point: updated });
+          }
+        },
+      });
+    }
+    if (toInput) {
+      this._toPicker = flatpickr(toInput, {
+        ...options,
+        defaultDate: this._state.point ? this._state.point.date_to : null,
+        onChange: (selectedDates) => {
+          if (selectedDates[0] && this._state.point) {
+            const updated = {
+              ...this._state.point,
+              date_to: selectedDates[0].toISOString(),
+            };
+            this._setState({ point: updated });
+          }
+        },
+      });
+    }
+  }
+
+  #removeDatePickers() {
+    if (this._fromPicker) {
+      this._fromPicker.destroy();
+      this._fromPicker = null;
+    }
+    if (this._toPicker) {
+      this._toPicker.destroy();
+      this._toPicker = null;
     }
   }
 }
