@@ -1,15 +1,24 @@
 import { render, remove, RenderPosition } from '../framework/render.js';
 import { USER_ACTION, UPDATE_TYPE_LIST } from '../utils/data-types.js';
-import { v4 as uuidv4 } from 'uuid';
+import { nanoid } from 'nanoid';
 import AddPointView from '../view/AddPointView.js';
 
 export default class NewPointPresenter {
   #allDestinations = null;
   #allOffers = null;
+
   #pointEdit = null;
   #pointsListComponent = null;
   #newPointButtonComponent = null;
+
   #handleDataChange = null;
+
+  #escKeyHandler = (e) => {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      this.remove();
+    }
+  };
 
   constructor(allDestinations, allOffers, pointsListComponent, onDataChange) {
     this.#allDestinations = allDestinations;
@@ -32,8 +41,8 @@ export default class NewPointPresenter {
             USER_ACTION.ADD_POINT,
             UPDATE_TYPE_LIST.MINOR,
             {
+              id: nanoid(),
               ...newPoint,
-              id: uuidv4(),
             }
           );
           this.#newPointButtonComponent.disabled = false;
@@ -62,11 +71,4 @@ export default class NewPointPresenter {
       document.removeEventListener('keydown', this.#escKeyHandler);
     }
   }
-
-  #escKeyHandler = (e) => {
-    if (e.key === 'Escape') {
-      e.preventDefault();
-      this.remove();
-    }
-  };
 }

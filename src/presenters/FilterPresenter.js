@@ -8,9 +8,9 @@ import FilterView from '../view/FilterView.js';
 
 export default class FilterPresenter {
   #filterContainer = null;
-  #filterComponent = null;
   #filterModel = null;
   #pointModel = null;
+  #filterComponent = null;
 
   #pointList = [];
 
@@ -37,6 +37,7 @@ export default class FilterPresenter {
 
     this.#filterComponent = new FilterView({
       filters,
+      currentFilterType: this.#filterModel.filter,
       onFilterTypeChange: this.#handleFilterTypeChange,
     });
 
@@ -54,11 +55,9 @@ export default class FilterPresenter {
   }
 
   #handleFilterTypeChange = (filterType) => {
-    if (this.#filterModel.filter === filterType) {
-      return;
+    if (this.#filterModel.filter !== filterType) {
+      this.#filterModel.setFilter(UPDATE_TYPE_LIST.MAJOR, filterType);
     }
-
-    this.#filterModel.setFilter(UPDATE_TYPE_LIST.MAJOR, filterType);
   };
 
   #handleModelFilterChange = () => {

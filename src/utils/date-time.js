@@ -5,9 +5,9 @@ export function parseFormatDate(dateString) {
   return dayjs(dateString).format('MMM D');
 }
 
-export function parseFormatDuration(dateFrom, dateTo) {
-  const startTime = dayjs(dateFrom);
-  const endTime = dayjs(dateTo);
+export function parseFormatDuration(date_from, date_to) {
+  const startTime = dayjs(date_from);
+  const endTime = dayjs(date_to);
   const durationMinutes = endTime.diff(startTime, 'minute');
 
   const durationDays = Math.floor(durationMinutes / 1440);
@@ -45,7 +45,7 @@ export function isPointFuture(point) {
 }
 
 export function sortByDay(pointFirst, pointSecond) {
-  return new Date(pointFirst.dateFrom) - new Date(pointSecond.dateFrom);
+  return new Date(pointFirst.date_from) - new Date(pointSecond.date_from);
 }
 
 export function sortByPrice(pointFirst, pointSecond) {
@@ -54,7 +54,7 @@ export function sortByPrice(pointFirst, pointSecond) {
 
 export function sortByDuration(pointFirst, pointSecond) {
   return (
-    dayjs(pointSecond.dateTo).diff(dayjs(pointSecond.dateFrom)) -
-    dayjs(pointFirst.dateTo).diff(dayjs(pointFirst.dateFrom))
+    dayjs(pointSecond.date_to).diff(dayjs(pointSecond.date_from)) -
+    dayjs(pointFirst.date_to).diff(dayjs(pointFirst.date_from))
   );
 }

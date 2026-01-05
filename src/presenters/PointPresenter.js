@@ -1,8 +1,7 @@
 import { render, replace, remove } from '../framework/render.js';
 import PointView from '../view/PointView.js';
 import EditPointView from '../view/EditPointView.js';
-import { USER_ACTION, UPDATE_TYPE_LIST } from '../utils/data-types.js';
-import { MODE } from '../utils/data-types.js';
+import { MODE, USER_ACTION, UPDATE_TYPE_LIST } from '../utils/data-types.js';
 
 export default class PointPresenter {
   #point = null;
@@ -10,7 +9,7 @@ export default class PointPresenter {
   #destination = null;
   #allDestinations = null;
   #allOffers = null;
-  #mode = 'DEFAULT';
+  #mode = MODE.DEFAULT;
 
   #pointTask = null;
   #pointEdit = null;
@@ -29,16 +28,12 @@ export default class PointPresenter {
   };
 
   constructor(
-    offer,
-    destination,
     allDestinations,
     allOffers,
     pointList,
     onModeChange,
     onDataChange
   ) {
-    this.#offer = offer;
-    this.#destination = destination;
     this.#allDestinations = allDestinations;
     this.#allOffers = allOffers;
     this.#pointList = pointList;
@@ -50,14 +45,7 @@ export default class PointPresenter {
     this.#point = point;
     this.#offer = this.#allOffers.find((offer) => offer.type === point.type);
     this.#destination = this.#allDestinations.find(
-      (destination) => destination.name === point.destination
-    );
-    console.log(
-      this.#point,
-      this.#offer,
-      this.#destination,
-      this.#allDestinations,
-      this.#allOffers
+      (destination) => destination.id === point.destination
     );
 
     const prevPointComponent = this.#pointTask;
@@ -130,6 +118,41 @@ export default class PointPresenter {
     if (this.#mode !== MODE.DEFAULT) {
       this.#replaceEditToTask();
     }
+  }
+
+  setSaving() {
+    if (this.#mode === MODE.EDITING) {
+      this.#pointEdit.updateElement({
+        isDisabled: true,
+        isSaving: true,
+      });
+    }
+  }
+
+  setDeleting() {
+    if (this.#mode === MODE.EDITING) {
+      this.#pointEdit.updateElement({
+        isDisabled: true,
+        isDeleting: true,
+      });
+    }
+  }
+
+  setAborting() {
+    if (this.#mode === MODE.DEFAULT) {
+      this.#pointTask.shake();
+      return;
+    }
+
+    const resetFormState = () => {
+      this.#pointEdit.updateElement({
+        isDisabled: false,
+        isDeleting: false,
+        isSaving: false,
+      });
+    };
+
+    this.#pointEdit.shake(resetFormState);
   }
 
   #replaceTaskToEdit() {

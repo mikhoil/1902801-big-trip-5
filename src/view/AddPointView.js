@@ -21,9 +21,12 @@ export default class AddPointView extends AbstractStatefulView {
       date_from: '',
       date_to: '',
       destination: '',
+      destinationName: '',
+      destinationPictures: [],
       description: '',
       offers: [],
-      type: 'flight',
+      type: '',
+      is_favorite: false,
     });
     this.#formHandler = onFormSubmit;
     this.#deleteHandler = onDeleteClick;
@@ -34,11 +37,12 @@ export default class AddPointView extends AbstractStatefulView {
   get template() {
     const {
       date_from,
-      date_to,
+      date_to: date_to,
       base_price,
       type,
       offers,
-      destination,
+      destinationName: name,
+      destinationPictures: pictures,
       description,
     } = this._state;
 
@@ -54,7 +58,7 @@ export default class AddPointView extends AbstractStatefulView {
 
     const offersList = offers
       .map((offerElement) => {
-        const checked = offers.includes(offerElement.id) ? 'checked' : '';
+        const checked = offers.includes(offerElement.id) ? 'cheacked' : '';
         const offerName = offerElement.title.toLowerCase().split(' ').join('-');
 
         return `<div class="event__offer-selector">
@@ -68,6 +72,15 @@ export default class AddPointView extends AbstractStatefulView {
       })
       .join('');
 
+    const pictureList = pictures
+      .map((picture) => {
+        const src = picture.src;
+        const alt = picture.description;
+
+        return `<img class="event__photo" src="${src}" alt="${alt}">`;
+      })
+      .join('');
+
     return `<li class="trip-events__item">
                 <form class="event event--edit" action="#" method="post">
                   <header class="event__header">
@@ -75,7 +88,7 @@ export default class AddPointView extends AbstractStatefulView {
                       <label class="event__type  event__type-btn" for="event-type-toggle-1">
                         <span class="visually-hidden">Choose event type</span>
                         <img class="event__type-icon" width="17" height="17" src="img/icons/${
-                          type || 'flight'
+                          type ? type : 'flight'
                         }.png" alt="Event type icon">
                       </label>
                       <input class="event__type-toggle  visually-hidden" id="event-type-toggle-1" type="checkbox">
@@ -90,18 +103,22 @@ export default class AddPointView extends AbstractStatefulView {
   
                     <div class="event__field-group  event__field-group--destination">
                       <label class="event__label  event__type-output" for="event-destination-1">
-                        ${type || 'flight'}
+                        ${type ? type : 'Flight'}
                       </label>
                       <input class="event__input  event__input--destination" id="event-destination-1" type="text" name="event-destination" value="${
-                        destination || ''
+                        name ? name : ''
                       }" list="destination-list-1">
                       <datalist id="destination-list-1">
-                        ${this.#allDestinations
-                          .map(
-                            (destination) =>
-                              `<option value="${destination.name}">`
-                          )
-                          .join('')}
+                        <option value="Valencia"></option>
+                        <option value="Venice"></option>
+                        <option value="Madrid"></option>
+                        <option value="Geneva"></option>
+                        <option value="Rome"></option>
+                        <option value="Saint Petersburg"></option>
+                        <option value="Chamonix"></option>
+                        <option value="Amsterdam"></option>
+                        <option value="Munich"></option>
+                        <option value="Den Haag"></option>
                       </datalist>
                     </div>
   
@@ -132,8 +149,8 @@ export default class AddPointView extends AbstractStatefulView {
                         <span class="visually-hidden">Price</span>
                         &euro;
                       </label>
-                      <input class="event__input  event__input--price" id="event-price-1" type="number" name="event-price" value="${
-                        base_price ? he.encode(base_price) : '0'
+                      <input class="event__input  event__input--price" id="event-price-1" type="text" name="event-price" value="${
+                        base_price ? he.encode(String(base_price)) : '0'
                       }" required>
                     </div>
   
@@ -141,7 +158,7 @@ export default class AddPointView extends AbstractStatefulView {
                       base_price > 0 &&
                       date_from !== '' &&
                       date_to !== '' &&
-                      destination !== ''
+                      name !== ''
                         ? ''
                         : 'disabled'
                     }>Save</button>
@@ -165,6 +182,12 @@ export default class AddPointView extends AbstractStatefulView {
                         ? `<section class="event__section  event__section--destination">
                       <h3 class="event__section-title  event__section-title--destination">Destination</h3>
                       <p class="event__destination-description">${description}</p>
+  
+                      <div class="event__photos-container">
+                        <div class="event__photos-tape">
+                          ${pictureList}
+                        </div>
+                      </div>
                     </section>`
                         : ''
                     }
@@ -223,14 +246,16 @@ export default class AddPointView extends AbstractStatefulView {
     }
 
     this.updateElement({
-      destination: newDestination.name,
+      destination: newDestination.id,
+      destinationName: newDestination.name,
+      destinationPictures: newDestination.pictures,
       description: newDestination.description,
     });
   };
 
   #priceHandlerChange = (e) => {
     e.preventDefault();
-    const newPrice = e.target.value;
+    const newPrice = parseFloat(e.target.value);
 
     if (isNaN(newPrice)) {
       e.target.value = '0';
@@ -245,15 +270,15 @@ export default class AddPointView extends AbstractStatefulView {
     });
   };
 
-  #dateFromHandlerChange = ([newDateFrom]) => {
+  #date_fromHandlerChange = ([newdate_from]) => {
     this.updateElement({
-      date_from: newDateFrom,
+      date_from: newdate_from,
     });
   };
 
-  #dateToHandlerChange = ([newDateTo]) => {
+  #date_toHandlerChange = ([newdate_to]) => {
     this.updateElement({
-      date_to: newDateTo,
+      date_to: newdate_to,
     });
   };
 
@@ -264,8 +289,8 @@ export default class AddPointView extends AbstractStatefulView {
         dateFormat: 'd/m/y H:i',
         enableTime: true,
         time_24hr: true,
-        defaultDate: this._state.date_from,
-        onChange: this.#dateFromHandlerChange,
+        defaultDate: this._state.dateForm,
+        onChange: this.#date_fromHandlerChange,
         maxDate: this._state.date_to,
       }
     );
@@ -279,7 +304,7 @@ export default class AddPointView extends AbstractStatefulView {
         enableTime: true,
         time_24hr: true,
         defaultDate: this._state.date_to,
-        onChange: this.#dateToHandlerChange,
+        onChange: this.#date_toHandlerChange,
         minDate: this._state.date_from,
       }
     );
@@ -298,11 +323,20 @@ export default class AddPointView extends AbstractStatefulView {
   static parseStateToPoint(state) {
     const point = { ...state };
 
-    if (!point.description) {
+    if (
+      !point.description &&
+      !point.destinationName &&
+      !point.destinationPictures
+    ) {
       point.description = null;
+      point.destinationName = null;
+      point.destinationPictures = null;
     }
 
     delete point.description;
+    delete point.destinationName;
+    delete point.destinationPictures;
+
     return point;
   }
 }
