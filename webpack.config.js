@@ -9,7 +9,7 @@ module.exports = {
     path: path.resolve(__dirname, 'build'),
     clean: true,
   },
-  deool: 'source-map',
+  devtool: 'source-map',
   plugins: [
     new CopyPlugin({
       patterns: [
