@@ -16,6 +16,12 @@ export default class AddPointView extends AbstractStatefulView {
     super();
     this.#allDestinations = allDestinations;
     this.#allOffers = allOffers;
+
+    const defaultType = 'flight';
+    const defaultOffers = this.#allOffers.find(
+      (offer) => offer.type === defaultType
+    );
+
     this._setState({
       base_price: 0,
       date_from: '',
@@ -24,9 +30,12 @@ export default class AddPointView extends AbstractStatefulView {
       destinationName: '',
       destinationPictures: [],
       description: '',
-      offers: [],
-      type: '',
+      availableOffers: defaultOffers ? defaultOffers.offers : [],
+      selectedOfferIds: [],
+      type: defaultType,
       is_favorite: false,
+      isDisabled: false,
+      isSaving: false,
     });
     this.#formHandler = onFormSubmit;
     this.#deleteHandler = onDeleteClick;
@@ -40,10 +49,13 @@ export default class AddPointView extends AbstractStatefulView {
       date_to: date_to,
       base_price,
       type,
-      offers,
+      availableOffers,
+      selectedOfferIds,
       destinationName: name,
       destinationPictures: pictures,
       description,
+      isDisabled,
+      isSaving,
     } = this._state;
 
     const eventTypes = POINTS_TYPE_LIST.map(
@@ -56,13 +68,15 @@ export default class AddPointView extends AbstractStatefulView {
         </div>`
     ).join('');
 
-    const offersList = offers
+    const offersList = availableOffers
       .map((offerElement) => {
-        const checked = offers.includes(offerElement.id) ? 'cheacked' : '';
+        const checked = selectedOfferIds.includes(offerElement.id)
+          ? 'checked'
+          : '';
         const offerName = offerElement.title.toLowerCase().split(' ').join('-');
 
         return `<div class="event__offer-selector">
-        <input class="event__offer-checkbox  visually-hidden" id="event-offer-${offerName}-${offerElement.id}" type="checkbox" name="event-offer-${offerName}" ${checked}>
+        <input class="event__offer-checkbox  visually-hidden" id="event-offer-${offerName}-${offerElement.id}" type="checkbox" name="event-offer-${offerName}" data-offer-id="${offerElement.id}" ${checked}>
         <label class="event__offer-label" for="event-offer-${offerName}-${offerElement.id}">
           <span class="event__offer-title">${offerElement.title}</span>
           &plus;&euro;&nbsp;
@@ -81,6 +95,10 @@ export default class AddPointView extends AbstractStatefulView {
       })
       .join('');
 
+    const destinationsList = this.#allDestinations
+      .map((destination) => `<option value="${destination.name}"></option>`)
+      .join('');
+
     return `<li class="trip-events__item">
                 <form class="event event--edit" action="#" method="post">
                   <header class="event__header">
@@ -88,13 +106,17 @@ export default class AddPointView extends AbstractStatefulView {
                       <label class="event__type  event__type-btn" for="event-type-toggle-1">
                         <span class="visually-hidden">Choose event type</span>
                         <img class="event__type-icon" width="17" height="17" src="img/icons/${
-                          type ? type : 'flight'
+                          type || 'flight'
                         }.png" alt="Event type icon">
                       </label>
-                      <input class="event__type-toggle  visually-hidden" id="event-type-toggle-1" type="checkbox">
+                      <input class="event__type-toggle  visually-hidden" id="event-type-toggle-1" type="checkbox" ${
+                        isDisabled ? 'disabled' : ''
+                      }>
   
                       <div class="event__type-list">
-                        <fieldset class="event__type-group">
+                        <fieldset class="event__type-group" ${
+                          isDisabled ? 'disabled' : ''
+                        }>
                           <legend class="visually-hidden">Event type</legend>
                           ${eventTypes}
                         </fieldset>
@@ -103,22 +125,15 @@ export default class AddPointView extends AbstractStatefulView {
   
                     <div class="event__field-group  event__field-group--destination">
                       <label class="event__label  event__type-output" for="event-destination-1">
-                        ${type ? type : 'Flight'}
+                        ${type || 'Flight'}
                       </label>
                       <input class="event__input  event__input--destination" id="event-destination-1" type="text" name="event-destination" value="${
-                        name ? name : ''
-                      }" list="destination-list-1">
+                        name || ''
+                      }" list="destination-list-1" ${
+      isDisabled ? 'disabled' : ''
+    }>
                       <datalist id="destination-list-1">
-                        <option value="Valencia"></option>
-                        <option value="Venice"></option>
-                        <option value="Madrid"></option>
-                        <option value="Geneva"></option>
-                        <option value="Rome"></option>
-                        <option value="Saint Petersburg"></option>
-                        <option value="Chamonix"></option>
-                        <option value="Amsterdam"></option>
-                        <option value="Munich"></option>
-                        <option value="Den Haag"></option>
+                        ${destinationsList}
                       </datalist>
                     </div>
   
@@ -131,7 +146,7 @@ export default class AddPointView extends AbstractStatefulView {
                               TIME_FORMAT_LIST['FULL_DATE']
                             )
                           : ''
-                      }">
+                      }" ${isDisabled ? 'disabled' : ''}>
                       &mdash;
                       <label class="visually-hidden" for="event-end-time-1">To</label>
                       <input class="event__input  event__input--time" id="event-end-time-1" type="text" name="event-end-time" value="${
@@ -141,7 +156,7 @@ export default class AddPointView extends AbstractStatefulView {
                               TIME_FORMAT_LIST['FULL_DATE']
                             )
                           : ''
-                      }">
+                      }" ${isDisabled ? 'disabled' : ''}>
                     </div>
   
                     <div class="event__field-group  event__field-group--price">
@@ -151,7 +166,7 @@ export default class AddPointView extends AbstractStatefulView {
                       </label>
                       <input class="event__input  event__input--price" id="event-price-1" type="text" name="event-price" value="${
                         base_price ? he.encode(String(base_price)) : '0'
-                      }" required>
+                      }" required ${isDisabled ? 'disabled' : ''}>
                     </div>
   
                     <button class="event__save-btn  btn  btn--blue" type="submit" ${
@@ -161,8 +176,12 @@ export default class AddPointView extends AbstractStatefulView {
                       name !== ''
                         ? ''
                         : 'disabled'
-                    }>Save</button>
-                    <button class="event__reset-btn" type="reset">Delete</button>
+                    } ${isDisabled ? 'disabled' : ''}>${
+      isSaving ? 'Saving...' : 'Save'
+    }</button>
+                    <button class="event__reset-btn" type="reset" ${
+                      isDisabled ? 'disabled' : ''
+                    }>Cancel</button>
                   </header>
                   <section class="event__details">
                     ${
@@ -213,6 +232,13 @@ export default class AddPointView extends AbstractStatefulView {
       .querySelector('.event__input--price')
       .addEventListener('change', this.#priceHandlerChange);
 
+    const offersSection = this.element.querySelector(
+      '.event__available-offers'
+    );
+    if (offersSection) {
+      offersSection.addEventListener('change', this.#offersHandlerChange);
+    }
+
     this.#setDatePickerStart();
     this.#setDatePickerEnd();
   }
@@ -224,7 +250,8 @@ export default class AddPointView extends AbstractStatefulView {
       (offers) => offers.type === targetType
     );
     this.updateElement({
-      offers: typeOffers.offers,
+      availableOffers: typeOffers.offers,
+      selectedOfferIds: [],
       type: targetType,
     });
   };
@@ -270,6 +297,28 @@ export default class AddPointView extends AbstractStatefulView {
     });
   };
 
+  #offersHandlerChange = (e) => {
+    if (e.target.classList.contains('event__offer-checkbox')) {
+      const offerId = e.target.dataset.offerId;
+      const selectedOfferIds = [...this._state.selectedOfferIds];
+
+      if (e.target.checked) {
+        if (!selectedOfferIds.includes(offerId)) {
+          selectedOfferIds.push(offerId);
+        }
+      } else {
+        const index = selectedOfferIds.indexOf(offerId);
+        if (index > -1) {
+          selectedOfferIds.splice(index, 1);
+        }
+      }
+
+      this._setState({
+        selectedOfferIds,
+      });
+    }
+  };
+
   #date_fromHandlerChange = ([newdate_from]) => {
     this.updateElement({
       date_from: newdate_from,
@@ -289,7 +338,7 @@ export default class AddPointView extends AbstractStatefulView {
         dateFormat: 'd/m/y H:i',
         enableTime: true,
         time_24hr: true,
-        defaultDate: this._state.dateForm,
+        defaultDate: this._state.date_from,
         onChange: this.#date_fromHandlerChange,
         maxDate: this._state.date_to,
       }
@@ -333,9 +382,15 @@ export default class AddPointView extends AbstractStatefulView {
       point.destinationPictures = null;
     }
 
+    point.offers = state.selectedOfferIds;
+
     delete point.description;
     delete point.destinationName;
     delete point.destinationPictures;
+    delete point.availableOffers;
+    delete point.selectedOfferIds;
+    delete point.isDisabled;
+    delete point.isSaving;
 
     return point;
   }

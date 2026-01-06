@@ -54,7 +54,8 @@ export default class EditPointView extends AbstractStatefulView {
       date_to,
       base_price,
       type,
-      offers,
+      availableOffers,
+      selectedOfferIds,
       destinationName: name,
       destinationPictures: pictures,
       description,
@@ -73,13 +74,15 @@ export default class EditPointView extends AbstractStatefulView {
         </div>`
     ).join('');
 
-    const offersList = offers
+    const offersList = availableOffers
       .map((offerElement) => {
-        const checked = offers.includes(offerElement.id) ? 'cheacked' : '';
+        const checked = selectedOfferIds.includes(offerElement.id)
+          ? 'checked'
+          : '';
         const offerName = offerElement.title.toLowerCase().split(' ').join('-');
 
         return `<div class="event__offer-selector">
-        <input class="event__offer-checkbox  visually-hidden" id="event-offer-${offerName}-${offerElement.id}" type="checkbox" name="event-offer-${offerName}" ${checked}>
+        <input class="event__offer-checkbox  visually-hidden" id="event-offer-${offerName}-${offerElement.id}" type="checkbox" name="event-offer-${offerName}" data-offer-id="${offerElement.id}" ${checked}>
         <label class="event__offer-label" for="event-offer-${offerName}-${offerElement.id}">
           <span class="event__offer-title">${offerElement.title}</span>
           &plus;&euro;&nbsp;
@@ -96,6 +99,10 @@ export default class EditPointView extends AbstractStatefulView {
 
         return `<img class="event__photo" src="${src}" alt="${alt}">`;
       })
+      .join('');
+
+    const destinationsList = this.#allDestinations
+      .map((destination) => `<option value="${destination.name}"></option>`)
       .join('');
 
     return `<li class="trip-events__item">
@@ -130,16 +137,7 @@ export default class EditPointView extends AbstractStatefulView {
       isDisabled ? 'disabled' : ''
     }>
                       <datalist id="destination-list-1">
-                        <option value="Valencia"></option>
-                        <option value="Venice"></option>
-                        <option value="Madrid"></option>
-                        <option value="Geneva"></option>
-                        <option value="Rome"></option>
-                        <option value="Saint Petersburg"></option>
-                        <option value="Chamonix"></option>
-                        <option value="Amsterdam"></option>
-                        <option value="Munich"></option>
-                        <option value="Den Haag"></option>
+                        ${destinationsList}
                       </datalist>
                     </div>
   
@@ -217,22 +215,12 @@ export default class EditPointView extends AbstractStatefulView {
   }
 
   reset() {
-    this._setState(
+    this.updateElement(
       EditPointView.parsePointToState(
         this.#point,
         this.#offer,
         this.#destination
       )
-    );
-    this.updateElement(
-      EditPointView.parseStateToPoint({
-        ...this.#point,
-        type: this.#offer.type,
-        offers: this.#offer.offers,
-        destinationName: this.#destination.name,
-        destinationPictures: this.#destination.pictures,
-        description: this.#destination.description,
-      })
     );
   }
 
@@ -256,6 +244,13 @@ export default class EditPointView extends AbstractStatefulView {
       .querySelector('.event__input--price')
       .addEventListener('change', this.#priceHandlerChange);
 
+    const offersSection = this.element.querySelector(
+      '.event__available-offers'
+    );
+    if (offersSection) {
+      offersSection.addEventListener('change', this.#offersHandlerChange);
+    }
+
     this.#setDatePickerStart();
     this.#setDatePickerEnd();
   }
@@ -267,7 +262,8 @@ export default class EditPointView extends AbstractStatefulView {
       (offers) => offers.type === targetType
     );
     this.updateElement({
-      offers: typeOffers.offers,
+      availableOffers: typeOffers.offers,
+      selectedOfferIds: [],
       type: targetType,
     });
   };
@@ -313,13 +309,35 @@ export default class EditPointView extends AbstractStatefulView {
     });
   };
 
-  #date_fromHandlerChange = ([newdate_from]) => {
+  #offersHandlerChange = (e) => {
+    if (e.target.classList.contains('event__offer-checkbox')) {
+      const offerId = e.target.dataset.offerId;
+      const selectedOfferIds = [...this._state.selectedOfferIds];
+
+      if (e.target.checked) {
+        if (!selectedOfferIds.includes(offerId)) {
+          selectedOfferIds.push(offerId);
+        }
+      } else {
+        const index = selectedOfferIds.indexOf(offerId);
+        if (index > -1) {
+          selectedOfferIds.splice(index, 1);
+        }
+      }
+
+      this._setState({
+        selectedOfferIds,
+      });
+    }
+  };
+
+  #dateFromHandlerChange = ([newdate_from]) => {
     this.updateElement({
       date_from: newdate_from,
     });
   };
 
-  #date_toHandlerChange = ([newdate_to]) => {
+  #dateToHandlerChange = ([newdate_to]) => {
     this.updateElement({
       date_to: newdate_to,
     });
@@ -332,8 +350,8 @@ export default class EditPointView extends AbstractStatefulView {
         dateFormat: 'd/m/y H:i',
         enableTime: true,
         time_24hr: true,
-        defaultDate: this._state.dateForm,
-        onChange: this.#date_fromHandlerChange,
+        defaultDate: this._state.date_from,
+        onChange: this.#dateFromHandlerChange,
         maxDate: this._state.date_to,
       }
     );
@@ -347,7 +365,7 @@ export default class EditPointView extends AbstractStatefulView {
         enableTime: true,
         time_24hr: true,
         defaultDate: this._state.date_to,
-        onChange: this.#date_toHandlerChange,
+        onChange: this.#dateToHandlerChange,
         minDate: this._state.date_from,
       }
     );
@@ -372,7 +390,8 @@ export default class EditPointView extends AbstractStatefulView {
     return {
       ...point,
       type: offer.type,
-      offers: offer.offers,
+      availableOffers: offer.offers,
+      selectedOfferIds: point.offers,
       destinationName: destination.name,
       destinationPictures: destination.pictures,
       description: destination.description,
@@ -395,9 +414,13 @@ export default class EditPointView extends AbstractStatefulView {
       point.destinationPictures = null;
     }
 
+    point.offers = state.selectedOfferIds;
+
     delete point.description;
     delete point.destinationName;
     delete point.destinationPictures;
+    delete point.availableOffers;
+    delete point.selectedOfferIds;
     delete point.isDisabled;
     delete point.isSaving;
     delete point.isDeleting;

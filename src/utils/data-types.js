@@ -56,13 +56,6 @@ export const USER_ACTION = {
   DELETE_POINT: 'DELETE_POINT',
 };
 
-export const METHOD = {
-  GET: 'GET',
-  PUT: 'PUT',
-  POST: 'POST',
-  DELETE: 'DELETE',
-};
-
 export const AUTHORIZATION = 'Basic YTph';
 
 export const END_POINT = 'https://24.objects.htmlacademy.pro/big-trip';

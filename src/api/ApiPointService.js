@@ -1,5 +1,4 @@
 import ApiService from '../framework/api-service.js';
-import { METHOD } from '../utils/data-types.js';
 
 export default class ApiPointService extends ApiService {
   get points() {
@@ -23,7 +22,7 @@ export default class ApiPointService extends ApiService {
   async updatePoint(point) {
     const response = await this._load({
       url: `points/${point.id}`,
-      method: METHOD.PUT,
+      method: 'PUT',
       body: JSON.stringify(point),
       headers: new Headers({ 'Content-Type': 'application/json' }),
     });
@@ -34,7 +33,7 @@ export default class ApiPointService extends ApiService {
   async addPoint(point) {
     const response = await this._load({
       url: 'points',
-      method: METHOD.POST,
+      method: 'POST',
       body: JSON.stringify(point),
       headers: new Headers({ 'Content-Type': 'application/json' }),
     });
@@ -43,11 +42,9 @@ export default class ApiPointService extends ApiService {
   }
 
   async deletePoint(point) {
-    const response = await this._load({
+    await this._load({
       url: `points/${point.id}`,
-      method: METHOD.DELETE,
+      method: 'DELETE',
     });
-
-    return await response.json();
   }
 }

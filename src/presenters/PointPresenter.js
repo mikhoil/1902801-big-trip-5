@@ -81,7 +81,6 @@ export default class PointPresenter {
           UPDATE_TYPE_LIST.PATCH,
           { ...newPoint }
         );
-        this.#replaceEditToTask();
       },
       onDeleteClick: (currentPoint) => {
         this.#handleDataChange(
@@ -102,7 +101,9 @@ export default class PointPresenter {
     }
 
     if (this.#mode === MODE.EDITING) {
-      replace(this.#pointEdit, prevEditFormComponent);
+      replace(this.#pointTask, prevEditFormComponent);
+      this.#mode = MODE.DEFAULT;
+      document.removeEventListener('keydown', this.#escKeyHandler);
     }
 
     remove(prevPointComponent);

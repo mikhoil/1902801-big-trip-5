@@ -41,15 +41,12 @@ export default class NewPointPresenter {
             USER_ACTION.ADD_POINT,
             UPDATE_TYPE_LIST.MINOR,
             {
-              id: nanoid(),
               ...newPoint,
             }
           );
-          this.#newPointButtonComponent.disabled = false;
         },
         onDeleteClick: () => {
           this.remove();
-          this.#newPointButtonComponent.disabled = false;
         },
       });
 
@@ -69,6 +66,29 @@ export default class NewPointPresenter {
       this.#pointEdit = null;
 
       document.removeEventListener('keydown', this.#escKeyHandler);
+      this.#newPointButtonComponent.disabled = false;
+    }
+  }
+
+  setSaving() {
+    if (this.#pointEdit !== null) {
+      this.#pointEdit.updateElement({
+        isDisabled: true,
+        isSaving: true,
+      });
+    }
+  }
+
+  setAborting() {
+    if (this.#pointEdit !== null) {
+      const resetFormState = () => {
+        this.#pointEdit.updateElement({
+          isDisabled: false,
+          isSaving: false,
+        });
+      };
+
+      this.#pointEdit.shake(resetFormState);
     }
   }
 }
