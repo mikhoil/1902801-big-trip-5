@@ -42,6 +42,7 @@ export default class MainPresenter {
   #loadingComponent = new LoadingView();
   #pointPresenterList = new Map();
   #filterPresenter = null;
+  #newPointPresenter = null;
 
   constructor({ pointModel }) {
     this.#tripEvents = document.querySelector('.trip-events');
@@ -80,14 +81,14 @@ export default class MainPresenter {
   }
 
   #renderNewPoint() {
-    const newPointComponent = new NewPointPresenter(
+    this.#newPointPresenter = new NewPointPresenter(
       this.#destinations,
       this.#offers,
       this.#pointList.element,
       this.#handlePointDataChange
     );
 
-    newPointComponent.init();
+    this.#newPointPresenter.init();
   }
 
   #renderPointTask(point) {
@@ -102,15 +103,6 @@ export default class MainPresenter {
     pointPresenter.init(point);
     this.#pointPresenterList.set(point.id, pointPresenter);
   }
-
-  // #renderFilterComponent() {
-  //   this.#filterComponent = new FilterPresenter({
-  //     filterModel: this.#filterModel,
-  //     pointModel: this.#pointModel,
-  //   });
-
-  //   this.#filterComponent.init();
-  // }
 
   #initFilterComponent() {
     this.#filterPresenter.init();
@@ -127,7 +119,6 @@ export default class MainPresenter {
     }
 
     if (this.#pointInitialList.length > 0) {
-      // this.#renderFilterComponent();
       this.#initFilterComponent();
 
       this.#sortComponent = new SortView({
@@ -185,7 +176,10 @@ export default class MainPresenter {
     remove(this.#loadingComponent);
     remove(this.#pointList);
 
-    // this.#currentSortType = 'day';
+    if (this.#newPointPresenter) {
+      this.#newPointPresenter.remove();
+      this.#newPointPresenter = null;
+    }
   }
 
   #handleModeChange = () => {
@@ -207,7 +201,12 @@ export default class MainPresenter {
         }
         break;
       case USER_ACTION.ADD_POINT:
-        this.#pointModel.addPoint(updateType, updatedPoint);
+        this.#newPointPresenter.setSaving();
+        try {
+          await this.#pointModel.addPoint(updateType, updatedPoint);
+        } catch (error) {
+          this.#newPointPresenter.setAborting();
+        }
         break;
       case USER_ACTION.DELETE_POINT:
         this.#pointPresenterList.get(updatedPoint.id).setDeleting();
@@ -233,7 +232,6 @@ export default class MainPresenter {
         this.init();
         break;
       case UPDATE_TYPE_LIST.MAJOR:
-        // this.#currentSortType = 'day';
         this.#sort();
         this.#clearListView();
         this.init();

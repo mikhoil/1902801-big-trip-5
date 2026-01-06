@@ -54,7 +54,7 @@ export default class PointModel extends Observable {
 
       this._notify(updateType, updatedPoint);
     } catch (err) {
-      throw new Error("Can't update task");
+      throw new Error("Can't update point");
     }
   }
 
@@ -66,7 +66,7 @@ export default class PointModel extends Observable {
 
       this._notify(updateType, newPoint);
     } catch (error) {
-      throw new Error("Can't add task");
+      throw new Error("Can't add point");
     }
   }
 

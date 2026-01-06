@@ -29,19 +29,21 @@ export default class PointView extends AbstractView {
     const { name } = this.#destination;
     const { type, offers } = this.#offer;
     const {
-      date_from: dateFrom,
-      date_to: dateTo,
-      base_price: basePrice,
+      date_from: date_from,
+      date_to: date_to,
+      base_price: base_price,
       is_favorite,
+      offers: selectedOfferIds,
     } = this.#point;
 
-    const offerList = offers
+    const selectedOffers = offers.filter((offer) =>
+      selectedOfferIds.includes(offer.id)
+    );
+
+    const offerList = selectedOffers
       .map((offerElement) => {
         const offerPrice = offerElement.price;
-        const offerTitle = offerElement.title
-          .toLowerCase()
-          .split(' ')
-          .join('-');
+        const offerTitle = offerElement.title;
 
         return `<li class="event__offer">
         <span class="event__offer-title">${offerTitle}</span>
@@ -56,10 +58,10 @@ export default class PointView extends AbstractView {
     return `<li class="trip-events__item">
                 <div class="event">
                   <time class="event__date" datetime="${parseFormatDate(
-                    dateFrom,
+                    date_from,
                     TIME_FORMAT_LIST['TIME_TAG_VALUE']
                   )}">${parseFormatDate(
-      dateFrom,
+      date_from,
       TIME_FORMAT_LIST['DAY']
     )}</time>
                   <div class="event__type">
@@ -68,23 +70,23 @@ export default class PointView extends AbstractView {
                   <h3 class="event__title">${type} ${name}</h3>
                   <div class="event__schedule">
                     <p class="event__time">
-                      <time class="event__start-time" datetime="${dateFrom}">${parseFormatDate(
-      dateFrom,
+                      <time class="event__start-time" datetime="${date_from}">${parseFormatDate(
+      date_from,
       TIME_FORMAT_LIST['TIME']
     )}</time>
                       &mdash;
-                      <time class="event__end-time" datetime=""${dateTo}">${parseFormatDate(
-      dateTo,
+                      <time class="event__end-time" datetime=""${date_to}">${parseFormatDate(
+      date_to,
       TIME_FORMAT_LIST['TIME']
     )}</time>
                     </p>
                     <p class="event__duration">${parseFormatDuration(
-                      dateFrom,
-                      dateTo
+                      date_from,
+                      date_to
                     )}</p>
                   </div>
                   <p class="event__price">
-                    &euro;&nbsp;<span class="event__price-value">${basePrice}</span>
+                    &euro;&nbsp;<span class="event__price-value">${base_price}</span>
                   </p>
                   <h4 class="visually-hidden">Offers:</h4>
                   <ul class="event__selected-offers">
