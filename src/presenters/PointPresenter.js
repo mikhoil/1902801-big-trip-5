@@ -17,6 +17,7 @@ export default class PointPresenter {
 
   #handleModeChange = null;
   #handleDataChange = null;
+  #tripInfoPresenter = null;
 
   #escKeyHandler = (e) => {
     if (e.key === 'Escape') {
@@ -24,6 +25,9 @@ export default class PointPresenter {
       this.#pointEdit.reset();
       this.#replaceEditToTask();
       document.removeEventListener('keydown', this.#escKeyHandler);
+      if (this.#tripInfoPresenter) {
+        this.#tripInfoPresenter.init();
+      }
     }
   };
 
@@ -32,13 +36,15 @@ export default class PointPresenter {
     allOffers,
     pointList,
     onModeChange,
-    onDataChange
+    onDataChange,
+    tripInfoPresenter
   ) {
     this.#allDestinations = allDestinations;
     this.#allOffers = allOffers;
     this.#pointList = pointList;
     this.#handleModeChange = onModeChange;
     this.#handleDataChange = onDataChange;
+    this.#tripInfoPresenter = tripInfoPresenter;
   }
 
   init(point) {
@@ -74,6 +80,9 @@ export default class PointPresenter {
         this.#pointEdit.reset();
         this.#replaceEditToTask();
         document.removeEventListener('keydown', this.#escKeyHandler);
+        if (this.#tripInfoPresenter) {
+          this.#tripInfoPresenter.init();
+        }
       },
       onFormSubmit: (newPoint) => {
         this.#handleDataChange(
@@ -88,6 +97,11 @@ export default class PointPresenter {
           UPDATE_TYPE_LIST.MINOR,
           { ...currentPoint }
         );
+      },
+      onOffersChange: (updatedPoint) => {
+        if (this.#tripInfoPresenter) {
+          this.#tripInfoPresenter.init(updatedPoint);
+        }
       },
     });
 

@@ -15,6 +15,7 @@ export default class EditPointView extends AbstractStatefulView {
   #rollupHandler = null;
   #formHandler = null;
   #deleteHandler = null;
+  #offersChangeHandler = null;
   #datepickerStart = null;
   #datepickerEnd = null;
 
@@ -27,6 +28,7 @@ export default class EditPointView extends AbstractStatefulView {
     onRollupClick,
     onFormSubmit,
     onDeleteClick,
+    onOffersChange,
   }) {
     super();
     this.#point = point;
@@ -44,6 +46,7 @@ export default class EditPointView extends AbstractStatefulView {
     this.#rollupHandler = onRollupClick;
     this.#formHandler = onFormSubmit;
     this.#deleteHandler = onDeleteClick;
+    this.#offersChangeHandler = onOffersChange;
 
     this._restoreHandlers();
   }
@@ -328,6 +331,10 @@ export default class EditPointView extends AbstractStatefulView {
       this._setState({
         selectedOfferIds,
       });
+
+      if (this.#offersChangeHandler) {
+        this.#offersChangeHandler(EditPointView.parseStateToPoint(this._state));
+      }
     }
   };
 
