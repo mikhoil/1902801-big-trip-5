@@ -16,6 +16,7 @@ import FiltersModel from '../model/FiltersModel.js';
 import PointPresenter from './PointPresenter.js';
 import FilterPresenter from './FilterPresenter.js';
 import NewPointPresenter from './NewPointPresenter.js';
+import TripInfoPresenter from './TripInfoPresenter.js';
 
 export default class MainPresenter {
   #pointList = null;
@@ -43,6 +44,7 @@ export default class MainPresenter {
   #pointPresenterList = new Map();
   #filterPresenter = null;
   #newPointPresenter = null;
+  #tripInfoPresenter = null;
 
   constructor({ pointModel }) {
     this.#tripEvents = document.querySelector('.trip-events');
@@ -55,6 +57,11 @@ export default class MainPresenter {
 
     this.#filterPresenter = new FilterPresenter({
       filterModel: this.#filterModel,
+      pointModel: this.#pointModel,
+    });
+
+    this.#tripInfoPresenter = new TripInfoPresenter({
+      container: document.querySelector('.trip-main'),
       pointModel: this.#pointModel,
     });
   }
@@ -97,7 +104,8 @@ export default class MainPresenter {
       this.#offers,
       this.#pointList.element,
       this.#handleModeChange,
-      this.#handlePointDataChange
+      this.#handlePointDataChange,
+      this.#tripInfoPresenter
     );
 
     pointPresenter.init(point);
@@ -117,6 +125,8 @@ export default class MainPresenter {
       this.#renderLoading();
       return;
     }
+
+    this.#tripInfoPresenter.init();
 
     if (this.#pointInitialList.length > 0) {
       this.#initFilterComponent();
